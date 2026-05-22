@@ -417,7 +417,7 @@ class _ArcadeHero extends StatelessWidget {
       height: 270,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: Colors.white.withValues(alpha: .16)),
         boxShadow: [
           BoxShadow(color: kGlowBlue.withValues(alpha: .18), blurRadius: 34),
@@ -426,52 +426,121 @@ class _ArcadeHero extends StatelessWidget {
       child: AnimatedBuilder(
         animation: controller,
         builder: (context, _) {
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              Image.asset(
-                'media/pavetareeq-linkedin-thumbnail.png',
-                fit: BoxFit.cover,
-                alignment: Alignment.center,
-              ),
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.bottomCenter,
-                    end: Alignment.topCenter,
-                    colors: [kInk.withValues(alpha: .78), Colors.transparent],
+          return CustomPaint(
+            painter: _HomeHeroPainter(controller.value),
+            child: Stack(
+              children: [
+                Positioned(
+                  left: 22,
+                  top: 22,
+                  right: 130,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Build the run.',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        showContinue
+                            ? 'Your road is waiting.'
+                            : "Don't run. Build the run.",
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              Positioned(
-                right: 20,
-                bottom: 52,
-                child: AnimatedRunner(
-                  skin: skin,
-                  animationValue: controller.value,
-                  pose: RunnerPose.running,
-                  loadout: loadout,
-                  size: 108,
-                  rearView: true,
+                Positioned(
+                  right: 20,
+                  bottom: 52,
+                  child: AnimatedRunner(
+                    skin: skin,
+                    animationValue: controller.value,
+                    pose: RunnerPose.running,
+                    loadout: loadout,
+                    size: 112,
+                  ),
                 ),
-              ),
-              Positioned(
-                left: 18,
-                right: 18,
-                bottom: 18,
-                child: GameButton(
-                  label: 'Build the Run',
-                  icon: Icons.auto_fix_high_rounded,
-                  onPressed: onPlay,
-                  compact: true,
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  bottom: 18,
+                  child: GameButton(
+                    label: 'Build the Run',
+                    icon: Icons.auto_fix_high_rounded,
+                    onPressed: onPlay,
+                    compact: true,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),
     );
   }
+}
+
+class _HomeHeroPainter extends CustomPainter {
+  const _HomeHeroPainter(this.t);
+
+  final double t;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [Color(0xFF101B45), Color(0xFF321A5F), Color(0xFF080B1D)],
+        ).createShader(Offset.zero & size),
+    );
+    final center = Offset(size.width * .5, size.height * .1);
+    final left = Offset(size.width * .08, size.height);
+    final right = Offset(size.width * .92, size.height);
+    final road = Path()
+      ..moveTo(center.dx - 28, center.dy)
+      ..lineTo(left.dx, left.dy)
+      ..lineTo(right.dx, right.dy)
+      ..lineTo(center.dx + 28, center.dy)
+      ..close();
+    canvas.drawPath(
+      road,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            kGlowBlue.withValues(alpha: .2),
+            kGlowPink.withValues(alpha: .45),
+          ],
+        ).createShader(Offset.zero & size),
+    );
+    for (var i = 0; i < 10; i++) {
+      final p = ((i / 10) + t) % 1;
+      final y = center.dy + p * p * size.height * .95;
+      final w = 40 + p * size.width * .55;
+      canvas.drawLine(
+        Offset(size.width / 2 - w / 2, y),
+        Offset(size.width / 2 + w / 2, y),
+        Paint()
+          ..color = Colors.white.withValues(alpha: .08 + p * .18)
+          ..strokeWidth = 2 + p * 5,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _HomeHeroPainter oldDelegate) => true;
 }
 
 class _DailyCard extends StatelessWidget {

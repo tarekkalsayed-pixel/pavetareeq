@@ -15,7 +15,6 @@ class AnimatedRunner extends StatelessWidget {
     required this.pose,
     this.loadout,
     this.size = 96,
-    this.rearView = false,
     super.key,
   });
 
@@ -24,7 +23,6 @@ class AnimatedRunner extends StatelessWidget {
   final RunnerPose pose;
   final WardrobeLoadout? loadout;
   final double size;
-  final bool rearView;
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +36,6 @@ class AnimatedRunner extends StatelessWidget {
             runPhase: animationValue,
             pose: pose,
             loadout: loadout,
-            rearView: rearView,
           ),
         ),
       ),
@@ -52,21 +49,15 @@ class RunnerPainter extends CustomPainter {
     required this.runPhase,
     required this.pose,
     this.loadout,
-    this.rearView = false,
   });
 
   final RunnerSkin skin;
   final double runPhase;
   final RunnerPose pose;
   final WardrobeLoadout? loadout;
-  final bool rearView;
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (rearView) {
-      _paintRearRunner(canvas, size);
-      return;
-    }
     final t = runPhase * pi * 2;
     final run = pose == RunnerPose.running || pose == RunnerPose.jumping;
     final fall = pose == RunnerPose.falling ? min(1.0, runPhase) : 0.0;
@@ -185,216 +176,6 @@ class RunnerPainter extends CustomPainter {
     _paintAccessories(canvas, size, loadout);
     _paintEffect(canvas, size, loadout?.effect, t);
     canvas.restore();
-  }
-
-  void _paintRearRunner(Canvas canvas, Size size) {
-    final t = runPhase * pi * 2;
-    final run = pose == RunnerPose.running || pose == RunnerPose.jumping;
-    final fall = pose == RunnerPose.falling ? min(1.0, runPhase) : 0.0;
-    final bob = run ? sin(t * 2) * size.height * .025 : sin(t) * 1.4;
-    final swing = sin(t) * size.width * .12;
-    final legLift = cos(t) * size.height * .055;
-    final jacket =
-        loadout?.jacket.primary ?? loadout?.outfit.primary ?? skin.primary;
-    final trim =
-        loadout?.top.secondary ?? loadout?.outfit.secondary ?? skin.secondary;
-    final pants = loadout?.pants.primary ?? const Color(0xFF172033);
-    final shoe = loadout?.shoes.primary ?? const Color(0xFFFFA229);
-    final hairColor = loadout?.hair.primary ?? const Color(0xFF171827);
-    final skinTone = _skinTone(loadout?.character.id ?? skin.id);
-
-    canvas.save();
-    canvas.translate(
-      size.width / 2,
-      size.height / 2 + bob + fall * size.height * .28,
-    );
-    canvas.rotate(fall * .75);
-    canvas.translate(-size.width / 2, -size.height / 2);
-
-    _paintTrail(canvas, size, loadout?.trail, t, run);
-    _paintGroundShadow(canvas, size, fall);
-
-    final glowPaint = Paint()
-      ..color = const Color(0xFF3DDCFF).withValues(alpha: .14)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14);
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(size.width * .5, size.height * .62),
-        width: size.width * .72,
-        height: size.height * .86,
-      ),
-      glowPaint,
-    );
-
-    final hip = Offset(size.width * .5, size.height * .64);
-    _paintRearLeg(
-      canvas,
-      size,
-      hip + Offset(-size.width * .07, size.height * .04),
-      Offset(size.width * (.39 - swing * .002), size.height * .77 + legLift),
-      Offset(
-        size.width * (.31 - swing * .002),
-        size.height * .91 - legLift * .25,
-      ),
-      Color.lerp(pants, Colors.black, .12)!,
-      shoe,
-    );
-    _paintRearLeg(
-      canvas,
-      size,
-      hip + Offset(size.width * .07, size.height * .04),
-      Offset(size.width * (.61 + swing * .002), size.height * .77 - legLift),
-      Offset(
-        size.width * (.69 + swing * .002),
-        size.height * .91 + legLift * .25,
-      ),
-      pants,
-      shoe,
-    );
-
-    _paintRearArm(
-      canvas,
-      size,
-      Offset(size.width * .35, size.height * .42),
-      Offset(size.width * .24 + swing, size.height * .66),
-      jacket,
-      skinTone,
-    );
-    _paintRearArm(
-      canvas,
-      size,
-      Offset(size.width * .65, size.height * .42),
-      Offset(size.width * .76 - swing, size.height * .66),
-      Color.lerp(jacket, Colors.white, .08)!,
-      skinTone,
-    );
-
-    final torso = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset(size.width * .5, size.height * .53),
-        width: size.width * .44,
-        height: size.height * .35,
-      ),
-      Radius.circular(size.width * .09),
-    );
-    canvas.drawRRect(
-      torso,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color.lerp(jacket, Colors.white, .16)!,
-            jacket,
-            Color.lerp(jacket, Colors.black, .25)!,
-          ],
-        ).createShader(Offset.zero & size),
-    );
-    _paintTinyNumber(canvas, size, '7', Color.lerp(trim, Colors.white, .2)!);
-
-    final neck = Rect.fromCenter(
-      center: Offset(size.width * .5, size.height * .34),
-      width: size.width * .16,
-      height: size.height * .08,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(neck, Radius.circular(size.width * .04)),
-      Paint()..color = skinTone,
-    );
-    canvas.drawOval(
-      Rect.fromCenter(
-        center: Offset(size.width * .5, size.height * .25),
-        width: size.width * .38,
-        height: size.height * .34,
-      ),
-      Paint()..color = hairColor,
-    );
-    for (var i = 0; i < 7; i++) {
-      final angle = -pi * .95 + i * pi * .32;
-      final base = Offset(size.width * .5, size.height * .21);
-      final tip =
-          base +
-          Offset(cos(angle) * size.width * .2, sin(angle) * size.height * .18);
-      final spike = Path()
-        ..moveTo(base.dx, base.dy)
-        ..lineTo(tip.dx, tip.dy)
-        ..lineTo(
-          base.dx + cos(angle + .55) * size.width * .12,
-          base.dy + sin(angle + .55) * size.height * .1,
-        )
-        ..close();
-      canvas.drawPath(spike, Paint()..color = hairColor);
-    }
-    canvas.restore();
-  }
-
-  void _paintRearLeg(
-    Canvas canvas,
-    Size size,
-    Offset start,
-    Offset knee,
-    Offset foot,
-    Color pants,
-    Color shoe,
-  ) {
-    canvas.drawLine(
-      start,
-      knee,
-      Paint()
-        ..color = pants
-        ..strokeWidth = size.width * .078
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawLine(
-      knee,
-      foot,
-      Paint()
-        ..color = pants
-        ..strokeWidth = size.width * .072
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: foot + Offset(0, size.height * .02),
-          width: size.width * .22,
-          height: size.height * .085,
-        ),
-        Radius.circular(size.width * .04),
-      ),
-      Paint()..color = shoe,
-    );
-  }
-
-  void _paintRearArm(
-    Canvas canvas,
-    Size size,
-    Offset shoulder,
-    Offset hand,
-    Color sleeve,
-    Color skinTone,
-  ) {
-    final elbow = Offset(
-      (shoulder.dx + hand.dx) / 2,
-      shoulder.dy + size.height * .14,
-    );
-    canvas.drawLine(
-      shoulder,
-      elbow,
-      Paint()
-        ..color = sleeve
-        ..strokeWidth = size.width * .07
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawLine(
-      elbow,
-      hand,
-      Paint()
-        ..color = skinTone
-        ..strokeWidth = size.width * .052
-        ..strokeCap = StrokeCap.round,
-    );
-    canvas.drawCircle(hand, size.width * .04, Paint()..color = skinTone);
   }
 
   void _paintGroundShadow(Canvas canvas, Size size, double fall) {
@@ -1251,6 +1032,5 @@ class RunnerPainter extends CustomPainter {
       oldDelegate.runPhase != runPhase ||
       oldDelegate.pose != pose ||
       oldDelegate.skin != skin ||
-      oldDelegate.loadout != loadout ||
-      oldDelegate.rearView != rearView;
+      oldDelegate.loadout != loadout;
 }

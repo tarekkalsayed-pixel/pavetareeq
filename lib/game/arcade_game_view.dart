@@ -98,7 +98,6 @@ class ArcadeGameView extends StatelessWidget {
                     pose: pose,
                     loadout: loadout,
                     size: runnerSize,
-                    rearView: true,
                   ),
                 ),
               ],
