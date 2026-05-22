@@ -41,14 +41,7 @@ class GameData {
       musicAsset: 'audio/music/season_2_candy_sky.mp3',
       gameplayModifierDescription: 'Soft floating transitions',
       levelDifficultyModifier: .015,
-      allowedTiles: [
-        TileType.safe,
-        TileType.broken,
-        TileType.coin,
-        TileType.ramp,
-        TileType.speed,
-        TileType.slow,
-      ],
+      allowedTiles: [TileType.safe, TileType.broken, TileType.coin],
     ),
     SeasonConfig(
       id: 3,
@@ -67,13 +60,7 @@ class GameData {
       gameplayModifierDescription:
           'Mild visual wind particles without obstruction',
       levelDifficultyModifier: .03,
-      allowedTiles: [
-        TileType.safe,
-        TileType.broken,
-        TileType.coin,
-        TileType.fallingBridge,
-        TileType.locked,
-      ],
+      allowedTiles: [TileType.safe, TileType.broken, TileType.coin],
     ),
     SeasonConfig(
       id: 4,
@@ -91,14 +78,7 @@ class GameData {
       musicAsset: 'audio/music/season_4_neon_night.mp3',
       gameplayModifierDescription: 'Subtle platform movement, still fair',
       levelDifficultyModifier: .045,
-      allowedTiles: [
-        TileType.safe,
-        TileType.broken,
-        TileType.coin,
-        TileType.moving,
-        TileType.laserWarning,
-        TileType.speed,
-      ],
+      allowedTiles: [TileType.safe, TileType.broken, TileType.coin],
     ),
     SeasonConfig(
       id: 5,
@@ -116,15 +96,7 @@ class GameData {
       musicAsset: 'audio/music/season_5_space_road.mp3',
       gameplayModifierDescription: 'Slightly floaty animation feel',
       levelDifficultyModifier: .06,
-      allowedTiles: [
-        TileType.safe,
-        TileType.broken,
-        TileType.coin,
-        TileType.gravity,
-        TileType.teleport,
-        TileType.fallingBridge,
-        TileType.locked,
-      ],
+      allowedTiles: [TileType.safe, TileType.broken, TileType.coin],
     ),
   ];
 
@@ -205,8 +177,7 @@ class GameData {
     int level,
     GameDifficultyConfig difficulty,
   ) {
-    final length =
-        15 + level + season.id + (level >= 7 ? 3 : 0) + (level == 10 ? 4 : 0);
+    final length = 12 + level + (level >= 7 ? 2 : 0) + (level == 10 ? 3 : 0);
     final tiles = <TileType>[
       TileType.safe,
       TileType.safe,
@@ -219,19 +190,8 @@ class GameData {
       final allowBackToBackDanger = false;
       if (roll < difficulty.brokenChance &&
           (!previousDanger || allowBackToBackDanger)) {
-        tiles.add(_dangerTile(season, i, level));
-      } else if (roll < difficulty.brokenChance + difficulty.speedTileChance &&
-          season.allowedTiles.contains(TileType.speed)) {
-        tiles.add(TileType.speed);
-      } else if (roll <
-              difficulty.brokenChance + difficulty.speedTileChance + .07 &&
-          season.allowedTiles.length > 3) {
-        tiles.add(_specialTile(season, i, level));
-      } else if (roll <
-          difficulty.brokenChance +
-              difficulty.speedTileChance +
-              .07 +
-              difficulty.coinChance) {
+        tiles.add(_dangerTile());
+      } else if (roll < difficulty.brokenChance + difficulty.coinChance) {
         tiles.add(TileType.coin);
       } else {
         tiles.add(TileType.safe);
@@ -250,34 +210,7 @@ class GameData {
     return value / 100;
   }
 
-  static TileType _dangerTile(SeasonConfig season, int index, int level) {
-    final danger = season.allowedTiles
-        .where(
-          (type) =>
-              type == TileType.broken ||
-              type == TileType.fallingBridge ||
-              type == TileType.locked ||
-              type == TileType.laserWarning,
-        )
-        .toList();
-    return danger[(index + level + season.id) % danger.length];
-  }
-
-  static TileType _specialTile(SeasonConfig season, int index, int level) {
-    final specials = season.allowedTiles
-        .where(
-          (type) =>
-              type != TileType.safe &&
-              type != TileType.broken &&
-              type != TileType.coin &&
-              type != TileType.fallingBridge &&
-              type != TileType.locked &&
-              type != TileType.laserWarning,
-        )
-        .toList();
-    if (specials.isEmpty) return TileType.safe;
-    return specials[(index + level + season.id) % specials.length];
-  }
+  static TileType _dangerTile() => TileType.broken;
 
   static bool _isDanger(TileType type) =>
       type == TileType.broken ||
@@ -286,23 +219,16 @@ class GameData {
       type == TileType.laserWarning;
 
   static List<TileType> _bossPattern(SeasonConfig season) {
-    final dangerA = _dangerTile(season, 3, 10);
-    final dangerB = _dangerTile(season, 7, 10);
-    final hasSpeed = season.allowedTiles.contains(TileType.speed);
-    final hasMoving = season.allowedTiles.contains(TileType.moving);
-    final hasGravity = season.allowedTiles.contains(TileType.gravity);
-    final hasTeleport = season.allowedTiles.contains(TileType.teleport);
     return [
       TileType.coin,
-      dangerA,
+      TileType.broken,
       TileType.safe,
-      if (hasSpeed) TileType.speed else TileType.coin,
-      TileType.safe,
-      dangerB,
-      if (hasMoving) TileType.moving else TileType.safe,
       TileType.coin,
-      if (hasGravity) TileType.gravity else if (hasTeleport) TileType.teleport,
-      dangerA,
+      TileType.safe,
+      TileType.broken,
+      TileType.safe,
+      TileType.coin,
+      TileType.broken,
       TileType.safe,
       TileType.coin,
     ];

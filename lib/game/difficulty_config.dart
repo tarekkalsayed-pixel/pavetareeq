@@ -52,36 +52,37 @@ GameDifficultyConfig difficultyForLevel(
   final zeroSeason = season - 1;
   final zeroLevel = level - 1;
   final isBoss = level == 10;
-  final bossBoost = isBoss ? .10 : 0.0;
-  // Tuning point: keep this curve linear and capped. Boss levels add a small
-  // readable bump; challenge should come from patterns, not impossible speed.
+  final bossBoost = isBoss ? .06 : 0.0;
+  // Keep the curve gentle. The game should feel readable first; mastery comes
+  // from timing clean saves, not from overwhelming speed or visual noise.
   final speed =
-      (1.0 +
-              zeroSeason * .08 +
-              zeroLevel * .035 +
+      (.86 +
+              zeroSeason * .035 +
+              zeroLevel * .02 +
               bossBoost +
-              (seasonCurveModifier ?? _seasonCurveModifier(season)))
-          .clamp(1.0, 1.85);
+              (seasonCurveModifier ?? _seasonCurveModifier(season)) * .35)
+          .clamp(.86, 1.34);
   final brokenChance =
-      (.11 + zeroSeason * .018 + zeroLevel * .018 + (isBoss ? .045 : 0)).clamp(
-        .12,
-        .36,
+      (.08 + zeroSeason * .01 + zeroLevel * .012 + (isBoss ? .035 : 0)).clamp(
+        .08,
+        .24,
       );
-  final coinChance = (.24 - zeroLevel * .007 + zeroSeason * .005).clamp(
-    .15,
-    .27,
+  final coinChance = (.28 - zeroLevel * .004 + zeroSeason * .004).clamp(
+    .2,
+    .31,
   );
-  final speedTileChance =
-      (.045 + zeroSeason * .008 + zeroLevel * .007 + (level >= 6 ? .018 : 0))
-          .clamp(.04, .14);
+  final speedTileChance = 0.0;
   final reactionTime = max(
-    season <= 2 ? .68 : .64,
-    1.22 - zeroLevel * .038 - zeroSeason * .035 - (isBoss ? .08 : 0),
+    season <= 2 ? .95 : .88,
+    1.55 - zeroLevel * .035 - zeroSeason * .025 - (isBoss ? .05 : 0),
   );
-  final tileGap = (.99 - zeroLevel * .012 - zeroSeason * .014).clamp(.82, .99);
-  final warningDuration = (reactionTime + .22).clamp(.78, 1.48);
-  final shake = (5.5 + zeroSeason * .75 + zeroLevel * .32 + (isBoss ? 1.8 : 0))
-      .clamp(5.5, 11.5);
+  final tileGap = (1.08 - zeroLevel * .006 - zeroSeason * .006).clamp(
+    .96,
+    1.08,
+  );
+  final warningDuration = (reactionTime + .26).clamp(1.05, 1.82);
+  final shake = (2.8 + zeroSeason * .25 + zeroLevel * .14 + (isBoss ? .9 : 0))
+      .clamp(2.8, 5.2);
   final difficultyLevel = (level + zeroSeason * 2).clamp(1, 10);
   return GameDifficultyConfig(
     speedMultiplier: speed.toDouble(),

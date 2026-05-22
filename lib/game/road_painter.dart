@@ -51,7 +51,7 @@ class ArcadeRoadPainter extends CustomPainter {
 
     final baseIndex = position.floor();
     for (
-      var i = min(tiles.length - 1, baseIndex + 11);
+      var i = min(tiles.length - 1, baseIndex + 8);
       i >= max(0, baseIndex - 1);
       i--
     ) {

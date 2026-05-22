@@ -61,8 +61,8 @@ class _GameplayScreenState extends State<GameplayScreen>
     _requiredFlips = _tiles.where((tile) => tile.canTap).length;
     _speed = widget.config.speed;
     _feedback = widget.config.isBoss
-        ? 'Boss Road!'
-        : 'Fix danger tiles before impact';
+        ? 'Final road!'
+        : 'Tap cracked tiles before the runner arrives';
     unawaited(AudioService.instance.playSeasonMusic(widget.config.season.id));
     final runMs = (780 - widget.config.difficulty.speedMultiplier * 95)
         .clamp(560, 720)
@@ -102,12 +102,10 @@ class _GameplayScreenState extends State<GameplayScreen>
       _position += (_speed / widget.config.difficulty.tileGap) * .016;
       _particles.tick(.016);
       final warningGap = widget.config.difficulty.warningDuration;
-      final ambientShake =
-          max(0, widget.config.difficulty.speedMultiplier - 2.0) * .55;
       _shake = dangerGap != null && dangerGap < warningGap
           ? (warningGap - dangerGap) *
                 widget.config.difficulty.cameraShakeStrength
-          : max(ambientShake, _shake - .3);
+          : max(0, _shake - .45);
     });
     final index = _position.floor();
     if (index != _processedIndex && index >= 0 && index < _tiles.length) {
@@ -148,7 +146,7 @@ class _GameplayScreenState extends State<GameplayScreen>
             _screenActionPoint(),
             effect.id == 'no_effect' ? kGold : effect.primary,
             text: '+coins',
-            count: effect.id == 'no_effect' ? 10 : 18,
+            count: effect.id == 'no_effect' ? 6 : 10,
           );
           unawaited(AudioService.instance.playCoin());
           _show('Coin collected');
@@ -221,7 +219,7 @@ class _GameplayScreenState extends State<GameplayScreen>
           _screenActionPoint(),
           kDangerRed,
           text: 'NO!',
-          count: 10,
+          count: 5,
         );
       });
       unawaited(AudioService.instance.playError());
@@ -247,12 +245,12 @@ class _GameplayScreenState extends State<GameplayScreen>
           _bestPerfectStreak = max(_bestPerfectStreak, _currentPerfectStreak);
           _coins += widget.config.difficulty.perfectBonus(lastSecond: true);
           _shake = 9;
-          _feedback = 'LAST SECOND SAVE!';
+          _feedback = 'Saved!';
           _particles.burst(
             _screenActionPoint(),
             kGold,
             text: 'SAVED!',
-            count: 22,
+            count: 12,
           );
           unawaited(AudioService.instance.playSuccess());
         } else if (gap > 0 && gap < perfectWindow) {
@@ -260,12 +258,12 @@ class _GameplayScreenState extends State<GameplayScreen>
           _currentPerfectStreak += 1;
           _bestPerfectStreak = max(_bestPerfectStreak, _currentPerfectStreak);
           _coins += widget.config.difficulty.perfectBonus(lastSecond: false);
-          _feedback = 'PERFECT!';
+          _feedback = 'Perfect!';
           _particles.burst(
             _screenActionPoint(),
             kGlowBlue,
             text: 'PERFECT!',
-            count: 18,
+            count: 10,
           );
           unawaited(AudioService.instance.playSuccess());
         } else {
@@ -275,7 +273,7 @@ class _GameplayScreenState extends State<GameplayScreen>
             _screenActionPoint(),
             kSafeGreen,
             text: 'FIXED',
-            count: 12,
+            count: 7,
           );
           unawaited(AudioService.instance.playSuccess());
         }
@@ -311,7 +309,7 @@ class _GameplayScreenState extends State<GameplayScreen>
         _screenActionPoint(),
         kDangerRed,
         text: 'FALL!',
-        count: 26,
+        count: 12,
       );
     });
     unawaited(AudioService.instance.playFail());
@@ -360,7 +358,7 @@ class _GameplayScreenState extends State<GameplayScreen>
         _screenActionPoint(),
         effect.id == 'no_effect' ? kGold : effect.primary,
         text: widget.config.isBoss ? 'BOSS CLEAR!' : 'COMPLETE!',
-        count: widget.config.isBoss ? 72 : (effect.id == 'no_effect' ? 42 : 58),
+        count: widget.config.isBoss ? 28 : (effect.id == 'no_effect' ? 18 : 24),
       );
     });
     unawaited(AudioService.instance.playLevelComplete());
@@ -451,12 +449,6 @@ class _GameplayScreenState extends State<GameplayScreen>
               level: widget.config.level,
               feedback: _feedback,
               coins: _coins,
-              speedText:
-                  'Speed x${widget.config.difficulty.speedMultiplier.toStringAsFixed(1)}',
-              difficultyText:
-                  '${widget.config.difficulty.difficultyLabel} ${widget.config.difficulty.difficultyLevel}/10',
-              rewardText:
-                  'Reward x${widget.config.difficulty.rewardMultiplier}',
               danger:
                   dangerGap != null &&
                   dangerGap < widget.config.difficulty.warningDuration,
@@ -573,9 +565,6 @@ class _GameHud extends StatelessWidget {
     required this.level,
     required this.feedback,
     required this.coins,
-    required this.speedText,
-    required this.difficultyText,
-    required this.rewardText,
     required this.danger,
     required this.onClose,
   });
@@ -584,9 +573,6 @@ class _GameHud extends StatelessWidget {
   final int level;
   final String feedback;
   final int coins;
-  final String speedText;
-  final String difficultyText;
-  final String rewardText;
   final bool danger;
   final VoidCallback onClose;
 
@@ -599,8 +585,8 @@ class _GameHud extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: .28),
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.black.withValues(alpha: .22),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
             color: danger ? kDangerRed : Colors.white12,
             width: danger ? 2 : 1,
@@ -626,7 +612,7 @@ class _GameHud extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    '${season.name} | Level $level',
+                    '${season.name} - Level $level',
                     style: const TextStyle(fontWeight: FontWeight.w900),
                   ),
                   Text(
@@ -637,16 +623,6 @@ class _GameHud extends StatelessWidget {
                       fontSize: 13,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: [
-                      _HudPill(text: speedText),
-                      _HudPill(text: difficultyText),
-                      _HudPill(text: rewardText),
-                    ],
-                  ),
                 ],
               ),
             ),
@@ -655,27 +631,6 @@ class _GameHud extends StatelessWidget {
             Text('$coins', style: const TextStyle(fontWeight: FontWeight.w900)),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _HudPill extends StatelessWidget {
-  const _HudPill({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: .1),
-        borderRadius: BorderRadius.circular(99),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
       ),
     );
   }
