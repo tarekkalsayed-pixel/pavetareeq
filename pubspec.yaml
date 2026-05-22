@@ -63,6 +63,7 @@ flutter:
     - assets/music/
     - assets/audio/music/
     - assets/audio/sfx/
+    - media/pavetareeq-linkedin-thumbnail.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

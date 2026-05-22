@@ -47,7 +47,9 @@ class ArcadeRoadPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     frames.clear();
     _paintSky(canvas, size);
+    _paintReferenceWorlds(canvas, size);
     _paintRoadGlow(canvas, size);
+    _paintReferenceCoinTrail(canvas, size);
 
     final baseIndex = position.floor();
     for (
@@ -66,6 +68,141 @@ class ArcadeRoadPainter extends CustomPainter {
       canvas.drawRect(
         Offset.zero & size,
         Paint()..color = Colors.black.withValues(alpha: darken * .55),
+      );
+    }
+  }
+
+  void _paintReferenceWorlds(Canvas canvas, Size size) {
+    final topHeight = size.height * .34;
+    final panels = [
+      (const Color(0xFF45B8FF), const Color(0xFFFF67B7)),
+      (const Color(0xFFFFB9E8), const Color(0xFFFFE188)),
+      (const Color(0xFFFFB15B), const Color(0xFF7B3B20)),
+      (const Color(0xFF1A1D66), const Color(0xFFFF4FD8)),
+      (const Color(0xFF060D36), const Color(0xFF3DDCFF)),
+    ];
+    final panelWidth = size.width / 4.15;
+    for (var i = 0; i < panels.length; i++) {
+      final x = -size.width * .1 + i * panelWidth * .78;
+      final panel = Path()
+        ..moveTo(x, 0)
+        ..lineTo(x + panelWidth, 0)
+        ..lineTo(x + panelWidth * .7, topHeight)
+        ..lineTo(x - panelWidth * .3, topHeight)
+        ..close();
+      canvas.drawPath(
+        panel,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [panels[i].$1, panels[i].$2],
+          ).createShader(Rect.fromLTWH(x, 0, panelWidth, topHeight)),
+      );
+      canvas.drawPath(
+        panel,
+        Paint()
+          ..color = Colors.white.withValues(alpha: .42)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.2,
+      );
+      _paintPanelMotif(canvas, size, i, x, panelWidth, topHeight);
+    }
+    canvas.drawRect(
+      Rect.fromLTWH(0, topHeight * .62, size.width, topHeight * .5),
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.transparent, kInk.withValues(alpha: .72)],
+        ).createShader(Rect.fromLTWH(0, 0, size.width, topHeight)),
+    );
+  }
+
+  void _paintPanelMotif(
+    Canvas canvas,
+    Size size,
+    int index,
+    double x,
+    double w,
+    double h,
+  ) {
+    final cx = x + w * .5;
+    if (index == 0) {
+      for (var i = 0; i < 4; i++) {
+        final rect = Rect.fromLTWH(
+          x + w * (.2 + i * .13),
+          h * (.33 - i * .02),
+          w * .11,
+          h * (.24 + i * .04),
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(5)),
+          Paint()..color = Colors.white.withValues(alpha: .2),
+        );
+      }
+      canvas.drawCircle(
+        Offset(cx - w * .15, h * .62),
+        w * .07,
+        Paint()..color = const Color(0xFFFFD05A).withValues(alpha: .55),
+      );
+    } else if (index == 1) {
+      canvas.drawCircle(
+        Offset(cx, h * .48),
+        w * .14,
+        Paint()..color = const Color(0xFFFF75C8).withValues(alpha: .42),
+      );
+      for (var i = 0; i < 3; i++) {
+        canvas.drawOval(
+          Rect.fromCenter(
+            center: Offset(x + w * (.25 + i * .22), h * .25),
+            width: w * .25,
+            height: h * .09,
+          ),
+          Paint()..color = Colors.white.withValues(alpha: .38),
+        );
+      }
+    } else if (index == 2) {
+      for (var i = 0; i < 3; i++) {
+        final py = h * (.62 - i * .14);
+        final pyramid = Path()
+          ..moveTo(cx - w * (.2 - i * .04), py)
+          ..lineTo(cx + w * (.2 - i * .04), py)
+          ..lineTo(cx, py - h * (.18 - i * .025))
+          ..close();
+        canvas.drawPath(
+          pyramid,
+          Paint()..color = const Color(0xFFFFD05A).withValues(alpha: .24),
+        );
+      }
+    } else if (index == 3) {
+      for (var i = 0; i < 5; i++) {
+        final rect = Rect.fromLTWH(
+          x + w * (.17 + i * .1),
+          h * (.25 + (i % 2) * .05),
+          w * .07,
+          h * (.42 - (i % 3) * .04),
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(rect, const Radius.circular(4)),
+          Paint()..color = const Color(0xFF3DDCFF).withValues(alpha: .26),
+        );
+      }
+    } else {
+      for (var i = 0; i < 16; i++) {
+        canvas.drawCircle(
+          Offset(
+            x + (i * 29 % max(w, 1)).toDouble(),
+            h * (.12 + (i % 7) * .08),
+          ),
+          1.2 + (i % 2),
+          Paint()..color = Colors.white.withValues(alpha: .75),
+        );
+      }
+      canvas.drawCircle(
+        Offset(cx + w * .18, h * .28),
+        w * .13,
+        Paint()..color = const Color(0xFF5B63FF).withValues(alpha: .36),
       );
     }
   }
@@ -245,6 +382,79 @@ class ArcadeRoadPainter extends CustomPainter {
           ..strokeCap = StrokeCap.round,
       );
     }
+    for (var i = 0; i < 4; i++) {
+      final side = i.isEven ? -1.0 : 1.0;
+      final x0 = size.width / 2 + side * (28 + i * 10);
+      final x1 = size.width / 2 + side * size.width * (.43 + i * .02);
+      canvas.drawLine(
+        Offset(x0, size.height * .14),
+        Offset(x1, size.height * .96),
+        Paint()
+          ..color = (i < 2 ? kGlowBlue : kGlowPink).withValues(alpha: .48)
+          ..strokeWidth = 2.2
+          ..strokeCap = StrokeCap.round
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
+      );
+    }
+  }
+
+  void _paintReferenceCoinTrail(Canvas canvas, Size size) {
+    final count = 7;
+    for (var i = 0; i < count; i++) {
+      final p = i / (count - 1);
+      final x = size.width * (.58 + p * .2 + sin(pulse * pi * 2 + i) * .01);
+      final y = size.height * (.2 + p * .28);
+      final r = 8 + p * 9;
+      canvas.drawCircle(
+        Offset(x, y),
+        r,
+        Paint()
+          ..color = kGold.withValues(alpha: .2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8),
+      );
+      canvas.drawCircle(Offset(x, y), r, Paint()..color = kGold);
+      canvas.drawCircle(
+        Offset(x - r * .25, y - r * .28),
+        r * .28,
+        Paint()..color = Colors.white.withValues(alpha: .38),
+      );
+      _paintStar(canvas, Offset(x, y), r * .52, Colors.white);
+    }
+    final tap = Offset(size.width * .53, size.height * .78);
+    for (var i = 0; i < 3; i++) {
+      final radius = 20 + i * 14 + sin(pulse * pi * 2).abs() * 8;
+      canvas.drawCircle(
+        tap,
+        radius,
+        Paint()
+          ..color = kGlowBlue.withValues(alpha: .22 - i * .045)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2.4,
+      );
+    }
+    canvas.drawCircle(
+      tap,
+      7,
+      Paint()
+        ..color = Colors.white
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+    );
+  }
+
+  void _paintStar(Canvas canvas, Offset center, double radius, Color color) {
+    final path = Path();
+    for (var i = 0; i < 10; i++) {
+      final angle = -pi / 2 + i * pi / 5;
+      final r = i.isEven ? radius : radius * .42;
+      final point = center + Offset(cos(angle) * r, sin(angle) * r);
+      if (i == 0) {
+        path.moveTo(point.dx, point.dy);
+      } else {
+        path.lineTo(point.dx, point.dy);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, Paint()..color = color.withValues(alpha: .88));
   }
 
   void _paintTile(
